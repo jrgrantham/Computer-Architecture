@@ -22,6 +22,7 @@ class CPU:
             0b00000001: self.halt,
             0b01000111: self.prn,
             0b10100010: self.mul,
+            0b10100000: self.add,
             0b10000010: self.ldi,
             0b01000101: self.push,
             0b01000110: self.pop,
@@ -128,15 +129,15 @@ class CPU:
     def call(self):
         self.reg[7] -= 1
         self.stack_pointer = self.reg[7]
-        self.ram[self.stack_pointer] = self.program_counter + 2
+        self.ram[self.stack_pointer] = (self.program_counter + 2)
         # self.ram_write(self.program_counter + 2, self.stack_pointer)
-        self.program_counter = (self.reg[self.operand_a]) - 2
+        self.program_counter = (self.reg[self.operand_a])
 
     def ret(self):
         self.stack_pointer = self.reg[7]
         val = self.ram_read(self.stack_pointer)
         # val = self.ram[self.stack_pointer]
-        self.program_counter = val - 1
+        self.program_counter = val
         self.reg[7] += 1
 
     def run(self):
@@ -148,4 +149,6 @@ class CPU:
             self.operand_a = self.ram_read(self.program_counter + 1)
             self.operand_b = self.ram_read(self.program_counter + 2)
             self.branchtable[IR]()
-            self.program_counter += (IR >> 6) + 1
+            # print(f'{IR:08b}'[3])
+            if f'{IR:08b}'[3] == '0':
+                self.program_counter += (IR >> 6) + 1
