@@ -33,6 +33,13 @@ class CPU:
             0b01010100: self.jmp,
             0b01010101: self.jeq,
             0b01010110: self.jne,
+            0b10101000: self.AND,
+            0b01101001: self.NOT,
+            0b10101010: self.OR,
+            0b10101011: self.XOR,
+            0b10101100: self.SHL,
+            0b10101101: self.SHR,
+            0b10100100: self.mod,
         }
 
     def halt(self):
@@ -84,7 +91,9 @@ class CPU:
     def add(self):
         self.alu('ADD', self.operand_a, self.operand_b)
 
-    
+    def mod(self):
+        self.alu('MOD', self.operand_a, self.operand_b)
+
     def cmp(self):
         self.alu('CMP', self.operand_a, self.operand_b)
 
@@ -102,6 +111,23 @@ class CPU:
                 self.flag = 0b00000010
             elif self.reg[reg_a] == self.reg[reg_b]:
                 self.flag = 0b00000001
+        elif op == 'AND':
+            self.reg[reg_a] &= self.reg[reg_b]
+        elif op == 'OR':
+            self.reg[reg_a] |= self.reg[reg_b]
+        elif op == 'XOR':
+            self.reg[reg_a] ^= self.reg[reg_b]
+        elif op == 'NOT':
+            self.reg[reg_a] = ~self.reg[reg_a]
+        elif op == 'MOD':
+            if self.reg[reg_b] == 0:
+                print('Error')
+                self.halt()
+            self.reg[reg_a] %= self.reg[reg_b]
+        elif op == 'SHL':
+            self.reg[reg_a] = self.reg[reg_a] << self.reg[reg_b]
+        elif op == 'SHR':
+            self.reg[reg_a] = self.reg[reg_a] >> self.reg[reg_b]
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -149,12 +175,19 @@ class CPU:
         # self.ram_write(self.program_counter + 2, self.stack_pointer)
         self.program_counter = (self.reg[self.operand_a])
 
+    def ret(self):
+        self.stack_pointer = self.reg[7]
+        val = self.ram_read(self.stack_pointer)
+        # val = self.ram[self.stack_pointer]
+        self.program_counter = val
+        self.reg[7] += 1
+
     def jmp(self):
         self.program_counter = self.reg[self.operand_a]
 
     def jeq(self):
         if self.flag == 0b00000001:
-            self.program_counter = self.reg[self.operand_a]
+            self.jmp()
         else:
             self.program_counter += 2
 
@@ -164,12 +197,23 @@ class CPU:
         else:
             self.program_counter += 2
 
-    def ret(self):
-        self.stack_pointer = self.reg[7]
-        val = self.ram_read(self.stack_pointer)
-        # val = self.ram[self.stack_pointer]
-        self.program_counter = val
-        self.reg[7] += 1
+    def AND(self):
+        self.alu('AND', self.operand_a, self.operand_b)
+
+    def NOT(self):
+        self.alu('NOT', self.operand_a, self.operand_b)
+
+    def OR(self):
+        self.alu('OR', self.operand_a, self.operand_b)
+
+    def XOR(self):
+        self.alu('XOR', self.operand_a, self.operand_b)
+
+    def SHL(self):
+        self.alu('SHL', self.operand_a, self.operand_b)
+
+    def SHR(self):
+        self.alu('SHR', self.operand_a, self.operand_b)
 
     def run(self):
         """Run the CPU."""
