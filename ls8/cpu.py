@@ -18,6 +18,7 @@ class CPU:
         self.program_counter = 0
         self.stack_pointer = 0
         self.running = True
+        self.flag: 0
         self.branchtable = {
             0b00000001: self.halt,
             0b01000111: self.prn,
@@ -27,7 +28,11 @@ class CPU:
             0b01000101: self.push,
             0b01000110: self.pop,
             0b00010001: self.ret,
-            0b01010000: self.call
+            0b01010000: self.call,
+            0b10100111: self.cmp,
+            0b01010100: self.jmp,
+            0b01010101: self.jeq,
+            0b01010110: self.jne,
         }
 
     def halt(self):
@@ -79,6 +84,10 @@ class CPU:
     def add(self):
         self.alu('ADD', self.operand_a, self.operand_b)
 
+    
+    def cmp(self):
+        self.alu('CMP', self.operand_a, self.operand_b)
+
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
@@ -86,6 +95,13 @@ class CPU:
             self.reg[reg_a] += self.reg[reg_b]
         elif op == "MUL":
             self.reg[reg_a] *= self.reg[reg_b]
+        elif op == "CMP":
+            if self.reg[reg_a] < self.reg[reg_b]:
+                self.flag = 0b00000100
+            elif self.reg[reg_a] > self.reg[reg_b]:
+                self.flag = 0b00000010
+            elif self.reg[reg_a] == self.reg[reg_b]:
+                self.flag = 0b00000001
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -132,6 +148,21 @@ class CPU:
         self.ram[self.stack_pointer] = (self.program_counter + 2)
         # self.ram_write(self.program_counter + 2, self.stack_pointer)
         self.program_counter = (self.reg[self.operand_a])
+
+    def jmp(self):
+        self.program_counter = self.reg[self.operand_a]
+
+    def jeq(self):
+        if self.flag == 0b00000001:
+            self.program_counter = self.reg[self.operand_a]
+        else:
+            self.program_counter += 2
+
+    def jne(self):
+        if f'{self.flag:08b}'[-1] == '0':
+            self.jmp()
+        else:
+            self.program_counter += 2
 
     def ret(self):
         self.stack_pointer = self.reg[7]
